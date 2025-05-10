@@ -90,6 +90,117 @@ def fetch_historical_5m(n = 10, mins=5, waits=1.1) -> pd.DataFrame:
 
     return df
 
+def fetch_historical_common_index() -> pd.DataFrame:
+    url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id=GE%20Common%20Trade%20Index"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        records = data["GE Common Trade Index"]
+        df = pd.DataFrame(records)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        return df
+    else:
+        raise Exception("Failed to fetch data")
+
+def fetch_historical_food_index() -> pd.DataFrame:
+    url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id=GE%20Food%20Index"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        records = data["GE Food Index"]
+        df = pd.DataFrame(records)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        return df
+    else:
+        raise Exception("Failed to fetch data")
+    
+def fetch_historical_herb_index() -> pd.DataFrame:
+    url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id=GE%20Herb%20Index"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        records = data["GE Herb Index"]
+        df = pd.DataFrame(records)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        return df
+    else:
+        raise Exception("Failed to fetch data")
+
+def fetch_historical_log_index() -> pd.DataFrame:
+    url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id=GE%20Log%20Index"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        records = data["GE Log Index"]
+        df = pd.DataFrame(records)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        return df
+    else:
+        raise Exception("Failed to fetch data")
+        
+def fetch_historical_metal_index() -> pd.DataFrame:
+    url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id=GE%20Metal%20Index"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        records = data["GE Metal Index"]
+        df = pd.DataFrame(records)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        return df
+    else:
+        raise Exception("Failed to fetch data")
+    
+def fetch_historical_rune_index() -> pd.DataFrame:
+    url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id=GE%20Rune%20Index"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        records = data["GE Rune Index"]
+        df = pd.DataFrame(records)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        return df
+    else:
+        raise Exception("Failed to fetch data")
+    
+def fetch_latest_idex_df():
+    index_calls = {"Common%20Trade": "GE Common Trade Index", "Food": "GE Food Index", "Herb": "GE Herb Index", "Log": "GE Log Index", "Metal": "GE Metal Index", "Rune": "GE Rune Index"}
+    df = pd.DataFrame(columns=[])
+
+    for index in index_calls.keys():
+        url = f"https://api.weirdgloop.org/exchange/history/osrs/latest?id=GE%20{index}%20Index"
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            df_t = pd.DataFrame.from_dict(data[index_calls[index]], orient='index').T
+            df = pd.concat([df, df_t], axis=0)
+        else:
+            raise Exception("Failed to fetch data")
+        
+        time.sleep(1.1)
+            
+    df = df.reset_index()
+    del df['index']
+    return df
+
 if __name__ == "__main__":
-    print(fetch_historical_5m())
+    print(fetch_latest_idex_df())
 
