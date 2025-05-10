@@ -21,6 +21,8 @@ def fetch_5min(timestamp: int):
 
     if response.status_code == 200:
         data = response.json()
+        df = pd.DataFrame.from_dict(data['data'], orient='index')
+        return df
     else:
         print("Failed to fetch data. Check the item ID or API status.")
 
@@ -38,12 +40,7 @@ def fetch_historical(item_id: int):
 
         df = pd.DataFrame(records)
         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-        df['timestamp'] = df['timestamp'].dt.tz_localize('UTC').dt.tz_convert('Europe/Amsterdam')
 
         return df
     else:
         print("Failed to fetch data. Check the item ID or API status.")
-
-#%%
-fetch_historical("561")
-#%%
