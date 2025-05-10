@@ -21,6 +21,8 @@ def fetch_latest_deprecated(item_ids: list[int]) -> pd.DataFrame:
         
         df = pd.DataFrame(records)
         df['timestamp'] = pd.to_datetime(df['timestamp']).dt.tz_localize(None)
+        df = df.reset_index()
+        df = df.rename(columns={"index": "item_id"})
         return df
     else:
         raise Exception("Failed to fetch data")
@@ -34,6 +36,8 @@ def fetch_latest() -> pd.DataFrame:
         df = pd.DataFrame.from_dict(data['data'], orient='index')
         df['highTime'] = pd.to_datetime(df['highTime'], unit='s')
         df['lowTime'] = pd.to_datetime(df['lowTime'], unit='s')
+        df = df.reset_index()
+        df = df.rename(columns={"index": "item_id"})
         return df
     else:
         raise Exception("Failed to fetch data")
@@ -50,6 +54,7 @@ def fetch_5min(timestamp: int = 0) -> pd.DataFrame:
         df = pd.DataFrame.from_dict(data['data'], orient='index')
         df = df.reset_index()
         df['timestamp'] = timestamp
+        df = df.rename(columns={"index": "item_id"})
         return df
     else:
         raise Exception("Failed to fetch data")
@@ -68,7 +73,7 @@ def fetch_historical(item_id: int) -> pd.DataFrame:
 
         df = pd.DataFrame(records)
         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-
+        df["item_id"] = item_id
         return df
     else:
         raise Exception("Failed to fetch data")
@@ -76,7 +81,7 @@ def fetch_historical(item_id: int) -> pd.DataFrame:
 def fetch_historical_5m(n = 10, mins=5, waits=1.1) -> pd.DataFrame:
     unix_timestamp_seconds = int(datetime.now().timestamp())
     unix_timestamp_seconds = unix_timestamp_seconds - unix_timestamp_seconds % 300
-    df = pd.DataFrame(columns=['index', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
+    df = pd.DataFrame(columns=['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
 
     for t in range(0, n):
         df_t = fetch_5min(unix_timestamp_seconds - (mins * 60) * t)
@@ -87,3 +92,4 @@ def fetch_historical_5m(n = 10, mins=5, waits=1.1) -> pd.DataFrame:
 
 if __name__ == "__main__":
     print(fetch_historical_5m())
+
