@@ -1,6 +1,5 @@
 import requests
 import pandas as pd
-from datetime import datetime as dt
 
 headers = {
     'User-Agent': 'Price/Volume Tracker and Scraper- NoHFT',
@@ -56,3 +55,24 @@ def fetch_historical(item_id: int) -> pd.DataFrame:
         return df
     else:
         print("Failed to fetch data. Check the item ID or API status.")
+
+def fetch_historical(item_id: int) -> pd.DataFrame:
+    url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id={item_id}"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        records = []
+        for item_id, entries in data.items():
+            for entry in entries:
+                records.append(entry)
+
+        df = pd.DataFrame(records)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+        return df
+    else:
+        print("Failed to fetch data. Check the item ID or API status.")
+
+print(fetch_latest([562, 565]))
