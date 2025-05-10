@@ -1,12 +1,9 @@
-#%%
 import requests
 import pandas as pd
-from datetime import datetime
-import json
 
 headers = {
     'User-Agent': 'Price/Volume Tracker and Scraper- NoHFT',
-    'From': 'mstavreff@outlook.com'
+    'From': 'mstavreff@outlook.com, discord: shrimpsalad'
 }
 
 def fetch_latest(item_id: str):
@@ -15,13 +12,19 @@ def fetch_latest(item_id: str):
 
     if response.status_code == 200:
         data = response.json()
-        item = data[item_id]
-
-        
     else:
         print("Failed to fetch data. Check the item ID or API status.")
 
-def fetch_historical(item_id: str):
+def fetch_5min(timestamp: int):
+    url = f"https://prices.runescape.wiki/api/v1/osrs/5m?timestamp={timestamp}"
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+    else:
+        print("Failed to fetch data. Check the item ID or API status.")
+
+def fetch_historical(item_id: int):
     url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id={item_id}"
     response = requests.get(url, headers=headers)
 
@@ -37,9 +40,10 @@ def fetch_historical(item_id: str):
         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
         df['timestamp'] = df['timestamp'].dt.tz_localize('UTC').dt.tz_convert('Europe/Amsterdam')
 
-        print(df)
+        return df
     else:
         print("Failed to fetch data. Check the item ID or API status.")
 
+#%%
 fetch_historical("561")
 #%%
