@@ -49,6 +49,7 @@ def fetch_5min(timestamp: int = 0) -> pd.DataFrame:
         data = response.json()
         df = pd.DataFrame.from_dict(data['data'], orient='index')
         df = df.reset_index()
+        df['timestamp'] = timestamp
         return df
     else:
         raise Exception("Failed to fetch data")
@@ -75,13 +76,14 @@ def fetch_historical(item_id: int) -> pd.DataFrame:
 def fetch_historical_5m(n = 10, mins=5, waits=1.1) -> pd.DataFrame:
     unix_timestamp_seconds = int(datetime.now().timestamp())
     unix_timestamp_seconds = unix_timestamp_seconds - unix_timestamp_seconds % 300
-    df = pd.DataFrame(columns=['index', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume'])
+    df = pd.DataFrame(columns=['index', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
 
-    for _ in range(0, n):
-        df_t = fetch_5min(unix_timestamp_seconds - (mins * 60) * n)
+    for t in range(0, n):
+        df_t = fetch_5min(unix_timestamp_seconds - (mins * 60) * t)
         df = pd.concat([df, df_t], ignore_index=True)
         time.sleep(waits)
 
     return df
 
-print(fetch_historical_5m())
+if __name__ == "__main__":
+    print(fetch_historical_5m())
