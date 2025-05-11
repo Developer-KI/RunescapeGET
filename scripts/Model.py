@@ -3,25 +3,26 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import seaborn as sns
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error, mean_squared_error
 import DataPipeline as pipeline
 np.random.seed(42)
 # %%
-
 price_data = pipeline.data_preprocess(read=True)
 reference = pipeline.alchemy_preprocess(read=True)
 
+price_matrix_items = price_data.pivot(index="timestamp", columns="item_id", values="wprice")
+price_items_reg = price_matrix_items[[219, 12934]]
 
-#440 1605 item id
-def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.DataFrame], window: int, n_splits, target_col: pd.DataFrame, merge_on: str ='timestamp', lag_features: list[int] = [1,2],n_tree_estimators: int =100):
+
+#219 12934 item id RF
+def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.DataFrame], window: int, n_splits, target_col: int = 219, merge_on: str ='timestamp', lag_features: list[int] = [1,2], n_tree_estimators: int =100):
 
     for ext_df in regressors_external:
         regressors_main = regressors_main.merge(ext_df, on=merge_on, how='left') 
     for lag in lag_features:
-         regressors_main[f'lag_{lag}'] = regressors_main[target_col].shift(lag)
+         regressors_main[f'lag_{lag}'] = regressors_main[[target_col]].shift(lag)
     
     regressors_main.dropna(inplace=True)
 
