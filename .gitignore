@@ -1,3 +1,4 @@
 # Jupyter Notebook metadata
 *.ipynb_checkpoints/
 *.pyc
+data/data.csv

@@ -1,8 +1,9 @@
 # %%
+#Script Innit
 import pandas as pd
 import matplotlib.pyplot as plt
-import APIFetcher as API
-import json
+import APIFetcher as fetcher
+import DataPipeline as pipeline
 
 plt.rcParams.update({
     'axes.facecolor': '#2E2E2E',
@@ -16,57 +17,24 @@ plt.rcParams.update({
 })
 
 # %%
-raw_pricedata = pd.read_csv('../data/data.csv', names=['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
-with open("../data/data_properties.txt", "r") as file:
-            lines = file.readlines()
-series_length = int(lines[1].replace("\n", ""))
-group_raw_pricedata = raw_pricedata.groupby('item_id').nunique()
-
-with open("../data/namealchemy.json", "r") as file:
-    data = json.load(file)
-
-# Convert dictionary to DataFrame
-high_alchemy = pd.DataFrame(list(data.items()), columns=["Item", "Price"])
-
-with open("../data/nameID.json", "r") as file:
-    data = json.load(file)
-
-# Convert dictionary to DataFrame
-nameID = pd.DataFrame(list(data.items()), columns=["Item", "ID"])
-
-reference = pd.merge(nameID, high_alchemy, on="Item", how="inner")
-reference= reference.drop([0,1])
-
-reference.set_index('ID', inplace=True)  # Use the 'ID' column as the row index
-print(reference.loc[561,'Item']) #Nature Rune
+#Read/Write processed data
+price_data = pipeline.data_preprocess(read=True)
+reference = pipeline.alchemy_preprocess(read=True)
 
 # %%
-#n-1 to ensure proper time series ranging
-filtered_indexes = group_raw_pricedata[group_raw_pricedata['timestamp'] != series_length].index
-raw_pricedata = raw_pricedata[~raw_pricedata['item_id'].isin(filtered_indexes)]
-# interpolate missing values
-raw_pricedata = raw_pricedata.interpolate()
-#Weighted average of High/Low Price by High/Low Volume
-raw_pricedata['totalvol'] = raw_pricedata['highPriceVolume'] + raw_pricedata['lowPriceVolume']
-raw_pricedata['wprice'] = (raw_pricedata['highPriceVolume']/raw_pricedata['totalvol']) * (raw_pricedata['avgHighPrice'] - raw_pricedata['avgLowPrice']) + raw_pricedata['avgLowPrice']
-#transforming panel data to price and volume matrices
-price_matrix_items = raw_pricedata.pivot(index="timestamp", columns="item_id", values="wprice")
-volume_matrix_items = raw_pricedata.pivot(index='timestamp', columns='item_id', values='totalvol')
+#Price and Volume Time series
+price_matrix_items = price_data.pivot(index="timestamp", columns="item_id", values="wprice")
+volume_matrix_items = price_data.pivot(index='timestamp', columns='item_id', values='totalvol')
+
 corr_price_items = price_matrix_items.corr()
 corr_volume_items = volume_matrix_items.corr()
 
-# %%
-#volatility smoothing
-volativity_sensitivity = 30
-volatilityitems = price_matrix_items.rolling(window=volativity_sensitivity).std()
-#Aggregate volatility
-volatilitymarket = volatilityitems.sum(axis=1)
-#Dividing by shape as count of row/column length
-volatilitymarket = volatilitymarket/corr_price_items.shape[1]
+price_volatility, start = pipeline.volatility_market(price_data)
 
 # %%
+#Volatility Plot
 plt.figure(figsize=(10, 5))
-plt.plot(pd.to_datetime(volatilitymarket.iloc[volativity_sensitivity:].index, unit='s'),volatilitymarket.iloc[volativity_sensitivity:], marker="o", markersize='2', linestyle="-", label="Standard Deviation")
+plt.plot(pd.to_datetime(price_volatility.iloc[start:].index, unit='s'), price_volatility.iloc[start:], marker="o", markersize='2', linestyle="-", label="Standard Deviation")
 
 plt.xlabel("Time")
 plt.ylabel("Standard Deviation (SD)")
@@ -78,12 +46,13 @@ plt.grid()
 plt.show()
 
 # %%
+#Item Price vs Alchemy Price Plot
 graphID = 45
 if graphID in reference.index:
-    nature = API.fetch_historical(graphID)
+    nature = fetcher.fetch_historical(graphID)
     plt.figure(figsize=(10, 5))
-    plt.plot(nature['timestamp'], nature['price'], marker="o", markersize='2', linestyle="-", label=f"{reference.loc[graphID,'Item']} Price")
-    plt.axhline(y=reference.loc[graphID,'Price'], color='cyan', linestyle='-', label='High Alchemy Price')
+    plt.plot(nature['timestamp'], nature['price'], marker="o", markersize='2', linestyle="-", label=f"{reference.loc[graphID,'item']} Price")
+    plt.axhline(y=reference.loc[graphID, 'price'], color='cyan', linestyle='-', label='High Alchemy Price')
 
     plt.xlabel("Time")
     plt.ylabel("Price (GP)")
