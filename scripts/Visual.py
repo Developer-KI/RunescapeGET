@@ -47,7 +47,8 @@ plt.show()
 
 # %%
 #Item Price vs Alchemy Price Plot
-graphID = 45
+#219, 12934, 
+graphID = 12934
 if graphID in reference.index:
     nature = fetcher.fetch_historical(graphID)
     plt.figure(figsize=(10, 5))

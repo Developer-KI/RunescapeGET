@@ -14,15 +14,16 @@ reference = pipeline.alchemy_preprocess(read=True)
 
 price_matrix_items = price_data.pivot(index="timestamp", columns="item_id", values="wprice")
 price_items_reg = price_matrix_items[[219, 12934]]
+price_items_reg.columns = ['219', '12934']
 
 
 #219 12934 item id RF
-def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.DataFrame], window: int, n_splits, target_col: int = 219, merge_on: str ='timestamp', lag_features: list[int] = [1,2], n_tree_estimators: int =100):
+def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.DataFrame], target_col: int, lag_features: list[int] = [1,2], window: int = 50, n_splits: int = 50, merge_on: str ='timestamp', n_tree_estimators: int =100):
 
     for ext_df in regressors_external:
-        regressors_main = regressors_main.merge(ext_df, on=merge_on, how='left') 
+        regressors_main = regressors_main.merge(ext_df, on=merge_on, how='left')
     for lag in lag_features:
-         regressors_main[f'lag_{lag}'] = regressors_main[[target_col]].shift(lag)
+         regressors_main[f'lag_{lag}'] = regressors_main[[f'{target_col}']].shift(lag)
     
     regressors_main.dropna(inplace=True)
 
@@ -36,10 +37,10 @@ def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.D
     for train_index, test_index in tscv.split(regressors_main):
         train_df, test_df = regressors_main.iloc[train_index], regressors_main.iloc[test_index]
 
-        X_train = train_df.drop(columns=[target_col])
-        y_train = train_df[target_col]
-        X_test = test_df.drop(columns=[target_col])
-        y_test = test_df[target_col]
+        X_train = train_df.drop(columns=[f'{target_col}'])
+        y_train = train_df[f'{test_index}']
+        X_test = test_df.drop(columns=[f'{target_col}'])
+        y_test = test_df[f'{test_index}']
 
         # Train Random Forest model
         rf_model = RandomForestRegressor(n_estimators=n_tree_estimators, random_state=123)
@@ -58,7 +59,7 @@ def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.D
         rss = np.sum((y_test - y_pred) ** 2)
 
         # Number of parameters (including intercept-current price)
-        k = regressors_main.shape[1] -1 + 1  
+        k = regressors_main.shape[1] - 1 + 1  
         n = len(y_train)  # Number of observations
 
         # Compute AIC and BIC
@@ -78,3 +79,4 @@ def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.D
     print(f"\nAverage MSE across splits: {sum(mse_scores) / len(mse_scores):.2f}")
     print(f"\nAverage RMSE across splits: {sum(rmse_scores) / len(rmse_scores):.2f}")
     return rf_model
+# %%
