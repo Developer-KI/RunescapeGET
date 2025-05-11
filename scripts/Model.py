@@ -8,67 +8,74 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 import APIFetcher as API
 
-# %%
-n=100
-snapfifty = API.fetch_historical_5m(n)
 
+import numpy as np
+import seaborn as sns
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error, mean_squared_error
 # %%
-#grab ID's with rows with NaN values == TRUE
-NAindex=snapfifty[snapfifty.isna().any(axis=1)]['item_id'].unique()
-snapfiftyprune = snapfifty[~snapfifty["item_id"].isin(NAindex)]
-#removing low volume items
-snapfiftyprunegroup= snapfiftyprune.groupby('item_id').nunique()
-#n-1 to ensure proper ranging
-filtered_indexes = snapfiftyprunegroup[snapfiftyprunegroup['timestamp'] != n-1].index
-snapfiftyprune=snapfiftyprune[~snapfiftyprune['item_id'].isin(filtered_indexes)]
-#rechecking groupings for n timestamps
-snapfiftyprunegroup= snapfiftyprune.groupby('item_id').nunique()
-#Weighted average of High/Low Price by High/Low Volume
-snapfiftyprune['totalvol']=snapfiftyprune['highPriceVolume']+snapfiftyprune['lowPriceVolume']
-snapfiftyprune['wprice']=(snapfiftyprune['highPriceVolume']/snapfiftyprune['totalvol'])*(snapfiftyprune['avgHighPrice']-snapfiftyprune['avgLowPrice'])+snapfiftyprune['avgLowPrice']
-#transforming panel data to price and volume matrices
-price_matrix_snapfifty=snapfiftyprune.pivot(index="timestamp", columns="item_id", values="wprice")
-vol_matrix_snapfifty=snapfiftyprune.pivot(index='timestamp', columns='item_id', values='totalvol')
-corr_price_snapfifty=price_matrix_snapfifty.corr()
-corr_vol_snapfifty=vol_matrix_snapfifty.corr()
-print(corr_price_snapfifty[corr_price_snapfifty > 0.7])
+np.random.seed(42)
+date_range = pd.date_range(start="2020-01-01", periods=100, freq="D")  # 100 days
+dfa = pd.DataFrame({
+    "date": date_range,
+    "value": np.random.randn(100) * 10 + 50  # Simulated time series values
+})
+print(dfa)
+dfa['shift1']=dfa['value'].shift(1)
+dfa['shift2']=dfa['value'].shift(2)
+print(dfa)
+dfa.dropna(inplace=True)
+print(dfa)
 
 
-# %%
-#volatility
-volatilityitems = price_matrix_snapfifty.rolling(window=4).std()
-volatilitymarket= volatilityitems.sum(axis=1)
-#Dividing by shape as count of row/column length
-volatilitymarket=volatilitymarket/price_matrix_snapfifty.shape[1]
-volatilitymarket
-print(snapfiftyprune['totalvol'].shape)
+import statsmodels as sm
 
-# %%
 #440 1605 item id
+def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: pd.DataFrame, window: int, n_splits, target_col, merge_on='timestamp', lag_features=[1,2],n_tree_estimators=100):
 
-features= vol_matrix_snapfifty['1605'].iloc[0:98]
-features=pd.concat([features, price_matrix_snapfifty["1605"]], axis=1).iloc[0:98]
-features=pd.concat([features, vol_matrix_snapfifty["440"]], axis=1).iloc[0:98]
-features=pd.concat([features, price_matrix_snapfifty["440"]], axis=1).iloc[0:98]
-features.columns=['ID 1605 Volume','ID 1605 Price','ID 440 Volume','ID 440 Price']
-target=price_matrix_snapfifty['440'].iloc[1:100]
+    for ext_df in regressors_external:
+        regressors_main = regressors_main.merge(ext_df, on=merge_on, how='left') 
+    for lag in lag_features:
+         regressors_main[f'lag_{lag}'] = regressors_main[target_col].shift(lag)
+    
+    regressors_main=regressors_main.dropna(inplace=True)
 
-# %%
-#440 1605 item id
+    tscv = TimeSeriesSplit(n_splits=n_splits, max_train_size=window) 
+    mae_scores = []
+    mse_scores = []
+    rmse_scores = []
+    aic_scores = []
+    bic_scores = []
+    
+    for train_index, test_index in tscv.split(regressors_main):
+        train_df, test_df = regressors_main.iloc[train_index], regressors_main.iloc[test_index]
+
+        X_train = train_df.drop(columns=[target_col])
+        y_train = train_df[target_col]
+        X_test = test_df.drop(columns=[target_col])
+        y_test = test_df[target_col]
+
+        # Train Random Forest model
+        rf_model = RandomForestRegressor(n_estimators=n_tree_estimators, random_state=123)
+        rf_model.fit(X_train, y_train)
+        # Predict on test data
+        y_pred = rf_model.predict(X_test)
+
+        # Evaluate model performance
+        mae = mean_absolute_error(y_test, y_pred)
+        mae_scores.append(mae)
+        mse = mean_squared_error(y_test, y_pred)
+        mse_scores.append(mse)
+        rmse = root_mean_squared_error(y_test, y_pred)
+        rmse_scores.append(rmse)
 
 
-# Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
+        print(f"Split {len(mae_scores)} - MAE: {mae:.2f}")
+        print(f"Split {len(mae_scores)} - MAE: {mse:.2f}")
+        print(f"Split {len(mae_scores)} - MAE: {rmse:.2f}")
 
-# Initialize and train the Random Forest Regressor
-rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-rf_model.fit(X_train, y_train)
-
-# Make predictions
-y_pred = rf_model.predict(X_test)
-print(y_pred)
-
-y_pred = rf_model.predict(X_test)  # Predicted values
-df_pred = pd.DataFrame({"timestamp": df_actual["timestamp"], "predicted_price": y_pred})
-
-
+    print(f"\nAverage MAE across splits: {sum(mae_scores) / len(mae_scores):.2f}")
+    print(f"\nAverage MSE across splits: {sum(mse_scores) / len(mse_scores):.2f}")
+    print(f"\nAverage RMSE across splits: {sum(rmse_scores) / len(rmse_scores):.2f}")
+    return rf_model
