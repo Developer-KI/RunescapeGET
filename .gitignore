@@ -1,0 +1,11 @@
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+__pycache__/
+.pytest_cache/
+.DS_Store
+*.swp
+*.swo
+*~
+*.pyc
+__pycache__
