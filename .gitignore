@@ -1,11 +1,4 @@
-# Jupyter
-.ipynb_checkpoints/
+# Jupyter Notebook metadata
 *.ipynb_checkpoints/
-__pycache__/
-.pytest_cache/
-.DS_Store
-*.swp
-*.swo
-*~
+.ipynb_checkpoints/
 *.pyc
-__pycache__
