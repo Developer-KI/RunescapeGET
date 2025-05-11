@@ -16,22 +16,19 @@ plt.rcParams.update({
 })
 
 # %%
-from numpy import shape
-
-
-item_r = pd.read_csv('../data/data.csv', names=['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
-with open("../data/data_properties.txt", "r") as file:
+item_r = pd.read_csv('./data/data.csv', names=['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
+with open("./data/data_properties.txt", "r") as file:
             lines = file.readlines()
 series_lenght = int(lines[1].replace("\n", ""))
 G_item_r = item_r.groupby('item_id').nunique()
 
-with open("../data/namealchemy.json", "r") as file:
+with open("./data/namealchemy.json", "r") as file:
     data = json.load(file)
 
 # Convert dictionary to DataFrame
 high_alchemy = pd.DataFrame(list(data.items()), columns=["Item", "Price"])
 
-with open("../data/nameID.json", "r") as file:
+with open("./data/nameID.json", "r") as file:
     data = json.load(file)
 
 # Convert dictionary to DataFrame
@@ -74,10 +71,9 @@ plt.xlabel("Time")
 plt.ylabel("Standard Deviation (SD)")
 plt.title("OSRS Market Volatility")
 plt.legend()
-plt.xticks(rotation=45)  # Rotate timestamps for clarity
+plt.xticks(rotation=45)
 plt.grid()
 
-# Show the plot
 plt.show()
 
 # %%
@@ -95,10 +91,6 @@ if graphID in reference.index:
     plt.xticks(rotation=45)  # Rotate timestamps for clarity
     plt.grid()
 
-    # Show the plot
     plt.show()
 else: print('Invalid ID')
-
-
-
 # %%
