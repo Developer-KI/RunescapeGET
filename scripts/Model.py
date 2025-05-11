@@ -3,31 +3,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, r2_score
-import APIFetcher as API
-
-
-import numpy as np
 import seaborn as sns
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error, mean_squared_error
+import DataPipeline
 # %%
 np.random.seed(42)
-date_range = pd.date_range(start="2020-01-01", periods=100, freq="D")  # 100 days
-dfa = pd.DataFrame({
-    "date": date_range,
-    "value": np.random.randn(100) * 10 + 50  # Simulated time series values
-})
-print(dfa)
-dfa['shift1']=dfa['value'].shift(1)
-dfa['shift2']=dfa['value'].shift(2)
-print(dfa)
-dfa.dropna(inplace=True)
-print(dfa)
-
 
 import statsmodels as sm
 
