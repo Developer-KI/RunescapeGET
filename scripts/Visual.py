@@ -19,7 +19,7 @@ plt.rcParams.update({
 # %%
 #Read/Write processed data
 price_data = pipeline.data_preprocess(read=True)
-reference = pipeline.alchemy_preprocess(read=Tr)
+reference = pipeline.alchemy_preprocess(read=True)
 
 # %%
 #Price and Volume Time series
