@@ -16,19 +16,19 @@ plt.rcParams.update({
 })
 
 # %%
-item_r = pd.read_csv('./data/data.csv', names=['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
-with open("./data/data_properties.txt", "r") as file:
+raw_pricedata = pd.read_csv('../data/data.csv', names=['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp'])
+with open("../data/data_properties.txt", "r") as file:
             lines = file.readlines()
-series_lenght = int(lines[1].replace("\n", ""))
-G_item_r = item_r.groupby('item_id').nunique()
+series_length = int(lines[1].replace("\n", ""))
+group_raw_pricedata = raw_pricedata.groupby('item_id').nunique()
 
-with open("./data/namealchemy.json", "r") as file:
+with open("../data/namealchemy.json", "r") as file:
     data = json.load(file)
 
 # Convert dictionary to DataFrame
 high_alchemy = pd.DataFrame(list(data.items()), columns=["Item", "Price"])
 
-with open("./data/nameID.json", "r") as file:
+with open("../data/nameID.json", "r") as file:
     data = json.load(file)
 
 # Convert dictionary to DataFrame
@@ -38,27 +38,28 @@ reference = pd.merge(nameID, high_alchemy, on="Item", how="inner")
 reference= reference.drop([0,1])
 
 reference.set_index('ID', inplace=True)  # Use the 'ID' column as the row index
-reference.loc[561,'Item'] #Nature Rune
+print(reference.loc[561,'Item']) #Nature Rune
 
 # %%
 #n-1 to ensure proper time series ranging
-filtered_indexes = G_item_r[G_item_r['timestamp'] != series_lenght].index
-item_r = item_r[~item_r['item_id'].isin(filtered_indexes)]
+filtered_indexes = group_raw_pricedata[group_raw_pricedata['timestamp'] != series_length].index
+raw_pricedata = raw_pricedata[~raw_pricedata['item_id'].isin(filtered_indexes)]
 # interpolate missing values
-item_r = item_r.interpolate()
+raw_pricedata = raw_pricedata.interpolate()
 #Weighted average of High/Low Price by High/Low Volume
-item_r['totalvol'] = item_r['highPriceVolume'] + item_r['lowPriceVolume']
-item_r['wprice'] = (item_r['highPriceVolume']/item_r['totalvol']) * (item_r['avgHighPrice'] - item_r['avgLowPrice']) + item_r['avgLowPrice']
+raw_pricedata['totalvol'] = raw_pricedata['highPriceVolume'] + raw_pricedata['lowPriceVolume']
+raw_pricedata['wprice'] = (raw_pricedata['highPriceVolume']/raw_pricedata['totalvol']) * (raw_pricedata['avgHighPrice'] - raw_pricedata['avgLowPrice']) + raw_pricedata['avgLowPrice']
 #transforming panel data to price and volume matrices
-price_matrix_items = item_r.pivot(index="timestamp", columns="item_id", values="wprice")
-vol_matrix_items = item_r.pivot(index='timestamp', columns='item_id', values='totalvol')
+price_matrix_items = raw_pricedata.pivot(index="timestamp", columns="item_id", values="wprice")
+volume_matrix_items = raw_pricedata.pivot(index='timestamp', columns='item_id', values='totalvol')
 corr_price_items = price_matrix_items.corr()
-corr_vol_items = vol_matrix_items.corr()
+corr_volume_items = volume_matrix_items.corr()
 
 # %%
-#volatility
+#volatility smoothing
 volativity_sensitivity = 30
 volatilityitems = price_matrix_items.rolling(window=volativity_sensitivity).std()
+#Aggregate volatility
 volatilitymarket = volatilityitems.sum(axis=1)
 #Dividing by shape as count of row/column length
 volatilitymarket = volatilitymarket/corr_price_items.shape[1]
