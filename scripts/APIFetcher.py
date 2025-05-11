@@ -95,12 +95,12 @@ def fetch_historical_5m(n = 10, mins=5, waits=1.1, timestamp: int = 0) -> pd.Dat
 
     return df[['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp']]
 
-def writing_returns(filepath: str = "./data.csv", n: int = 100, p: int= 10) -> void:
+def writing_returns(filepath: str = "../data/data.csv", n: int = 100, p: int= 10) -> void:
     timestampt_start = int(datetime.now().timestamp())
     timestampt_start = timestampt_start - timestampt_start % 300
     series_lenght = 0
 
-    with open("./data_properties.txt", "r") as file:
+    with open("../data/data_properties.txt", "r") as file:
             lines = file.readlines()
     if lines != list():
         timestampt_start = int(lines[0].replace("\n", ""))
@@ -113,14 +113,14 @@ def writing_returns(filepath: str = "./data.csv", n: int = 100, p: int= 10) -> v
         df_t = df_t[['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp']]
         df_t.to_csv(filepath, mode='a', header=False, index=False)
         series_lenght = series_lenght + n
-        with open("./data_properties.txt", "w") as file:
+        with open("../data/data_properties.txt", "w") as file:
             file.write(f"{last_call_timestamp}\n")
             file.write(f"{series_lenght - 1}\n")
         print(f"{(t + 1) * n} queries added!")
     print("Success!")
 
 if __name__ == "__main__":
-    writing_returns(n=100, p=6)
+    writing_returns(n=100, p=10)
 
 def fetch_historical_common_index() -> pd.DataFrame:
     url = f"https://api.weirdgloop.org/exchange/history/osrs/all?id=GE%20Common%20Trade%20Index"
