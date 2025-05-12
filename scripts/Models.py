@@ -2,14 +2,15 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-def RFTS(data: pd.DataFrame, feature_col: str, splits: int = 5, estimators: int = 100, seed: int = 42) -> RandomForestRegressor:
-    X = data.drop(feature_col, axis=1)
-    Y = data[feature_col]
+def RFTS(data: pd.DataFrame, target_col: str, splits: int = 5, estimators: int = 100, seed: int = 42) -> RandomForestRegressor:
+    X = data.drop(target_col, axis=1)
+    Y = data[target_col]
 
     tscv = TimeSeriesSplit(n_splits=splits)
-    cv_mses = []
+    cv_mse = []
+    cv_mae = []
     output_model = None
 
     for train_idx, test_idx in tscv.split(X):
@@ -22,14 +23,18 @@ def RFTS(data: pd.DataFrame, feature_col: str, splits: int = 5, estimators: int 
         preds_cv = model_cv.predict(X_test_cv)
 
         model_mse = mean_squared_error(y_test_cv, preds_cv)
+        model_mae = mean_absolute_error(y_test_cv, preds_cv)
         
-        if model_mse < min(cv_mses, default=0):
+        
+        if model_mse < min(cv_mse, default=0):
             output_model = model_cv
 
-        cv_mses.append(model_mse)
+        cv_mse.append(model_mse)
+        cv_mae.append(model_mae)
     
     if output_model != None:
-        print(f"Cross-validated RMSE: {np.sqrt(np.mean(cv_mses)):.4f} (±{np.sqrt(np.std(cv_mses)):.4f})")
+        print(f"Cross-validated RMSE: {np.sqrt(np.mean(cv_mse)):.4f} (±{np.sqrt(np.std(cv_mse)):.4f})")
+        print(f"Cross-validated MAE: {np.sqrt(np.mean(cv_mae)):.4f} (±{np.sqrt(np.std(cv_mae)):.4f})")
         return output_model
     else:
         raise Exception("Failed to choose model")
