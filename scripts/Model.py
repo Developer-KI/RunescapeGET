@@ -13,10 +13,11 @@ price_data = pipeline.data_preprocess(read=True)
 reference = pipeline.alchemy_preprocess(read=True)
 
 price_matrix_items = price_data.pivot(index="timestamp", columns="item_id", values="wprice")
+volume_matrix_items = price_data.pivot(index='timestamp', columns='item_id', values='totalvol')
 price_items_reg = price_matrix_items[[219, 12934]]
 price_items_reg.columns = ['219', '12934']
 
-
+#%%
 #219 12934 item id RF
 def TSRandomForest(regressors_main: pd.DataFrame, regressors_external: list[pd.DataFrame], target_col: int, lag_features: list[int] = [1,2], window: int = 50, n_splits: int = 50, merge_on: str ='timestamp', n_tree_estimators: int =100):
 
