@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 
-def data_preprocess(read: bool, filepath: str = "../data", read_path: str = "../data/processed_data.csv", write: bool = False) -> pd.DataFrame:
+def data_preprocess(read: bool, filepath: str = "../data", read_path: str = "../data/processed_data.csv", write: bool = False, interp_method: str = 'linear') -> pd.DataFrame:
     ### Read has higher priority than write
     if read:
         df = pd.read_csv(f'{read_path}', names=['item_id', 'avgHighPrice', 'highPriceVolume', 'avgLowPrice', 'lowPriceVolume', 'timestamp', 'totalvol', 'wprice'])
@@ -21,7 +21,7 @@ def data_preprocess(read: bool, filepath: str = "../data", read_path: str = "../
     raw_pricedata = raw_pricedata[~raw_pricedata['item_id'].isin(filtered_indexes)]
     
     # interpolate missing values
-    processed_priced_data = raw_pricedata.interpolate()
+    processed_priced_data = raw_pricedata.interpolate(method=interp_method)
     
     #Weighted average of High/Low Price by High/Low Volume
     processed_priced_data['totalvol'] = processed_priced_data['highPriceVolume'] + processed_priced_data['lowPriceVolume']
@@ -70,7 +70,7 @@ def volatility_market(market_data: pd.DataFrame, smoothing: int = 20) -> pd.Seri
     corr_price_market = price_market_data.corr()
     volatilitymarket = volatilitymarket/corr_price_market.shape[1]
 
-    return (volatilitymarket, smoothing)
+    return pd.DataFrame(volatilitymarket, columns=['market_vix'])
     
 
 

@@ -2,8 +2,8 @@
 #Script Innit
 import pandas as pd
 import matplotlib.pyplot as plt
-import APIFetcher as fetcher
 import DataPipeline as pipeline
+import ModelTools as tools
 
 plt.rcParams.update({
     'axes.facecolor': '#2E2E2E',
@@ -29,7 +29,8 @@ volume_matrix_items = price_data.pivot(index='timestamp', columns='item_id', val
 corr_price_items = price_matrix_items.corr()
 corr_volume_items = volume_matrix_items.corr()
 
-price_volatility, start = pipeline.volatility_market(price_data)
+start = 20
+price_volatility = pipeline.volatility_market(price_data, smoothing=start)
 
 # %%
 #Volatility Plot
@@ -48,20 +49,6 @@ plt.show()
 # %%
 #Item Price vs Alchemy Price Plot
 #219, 12934, 
-graphID = 12934
-if graphID in reference.index:
-    nature = fetcher.fetch_historical(graphID)
-    plt.figure(figsize=(10, 5))
-    plt.plot(nature['timestamp'], nature['price'], marker="o", markersize='2', linestyle="-", label=f"{reference.loc[graphID,'item']} Price")
-    plt.axhline(y=reference.loc[graphID, 'price'], color='cyan', linestyle='-', label='High Alchemy Price')
-
-    plt.xlabel("Time")
-    plt.ylabel("Price (GP)")
-    plt.title("OSRS Grand Exchange Price Trend")
-    plt.legend()
-    plt.xticks(rotation=45)  # Rotate timestamps for clarity
-    plt.grid()
-
-    plt.show()
-else: print('Invalid ID')
+tools.plot_historical_alch_vs_price(12934)
+tools.plot_recent_alch_vs_price(12934)
 # %%
