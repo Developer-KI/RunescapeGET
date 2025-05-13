@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import DataPipeline as pipeline
 import ModelTools as tools
+import matplotlib.ticker as mticker
+
 
 plt.rcParams.update({
     'axes.facecolor': '#2E2E2E',
@@ -25,7 +27,7 @@ reference = pipeline.alchemy_preprocess(read=True)
 #Price and Volume Time series
 price_matrix_items = price_data.pivot(index="timestamp", columns="item_id", values="wprice")
 volume_matrix_items = price_data.pivot(index='timestamp', columns='item_id', values='totalvol')
-
+totalvolume_time = volume_matrix_items.iloc[:,1:].sum(axis=1)
 corr_price_items = price_matrix_items.corr()
 corr_volume_items = volume_matrix_items.corr()
 
@@ -52,3 +54,22 @@ plt.show()
 tools.plot_historical_alch_vs_price(12934)
 tools.plot_recent_alch_vs_price(12934)
 # %%
+# Total Volume Plot 
+plt.figure(figsize=(10,5))
+plt.plot(pd.to_datetime(price_volatility.iloc[:].index, unit='s'), totalvolume_time, marker="o", markersize='2', linestyle="-", label="Volume")
+
+ax=plt.gca()
+ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
+ax.yaxis.get_major_formatter().set_scientific(False) 
+
+
+plt.xlabel("Time")
+plt.ylabel("Volume of Market Trade")
+plt.title(fr"Volume of $\mathbf{{{volume_matrix_items.shape[1]}}}$ Most Traded Items")
+
+
+plt.legend()
+plt.xticks(rotation=45)
+plt.grid()
+
+plt.show()

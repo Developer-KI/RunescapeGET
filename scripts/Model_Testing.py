@@ -33,3 +33,16 @@ Y = df[f'{target_item}']
 
 tools.plot_pred_vs_price(Y.iloc[test_idx[:100]], X.iloc[test_idx[:100]], model=model)
 # %%
+import hmmlearn as hmm
+
+priceboolean = pd.DataFrame(columns=[''])
+priceboolean.loc[0]=1
+priceboolean.loc[0]=priceboolean.loc[0].fillna(1)
+for col_name, col_values in price_matrix_items.items():
+    for j in range(1,price_data.shape[0]+1):
+        boolean_col = pd.Series()
+        if col_values.iloc[j]>col_values.iloc[j-1]:
+            boolean_col.loc[len(priceboolean)] = 1
+        else:
+            boolean_col.loc[len(priceboolean)] = 0
+        priceboolean[col_name]=boolean_col
