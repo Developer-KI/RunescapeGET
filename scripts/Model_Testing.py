@@ -34,10 +34,11 @@ Y = df[f'{target_item}']
 
 tools.plot_pred_vs_price(Y.iloc[test_idx[:100]], X.iloc[test_idx[:100]], model=model)
 # %%
-import hmmlearn as hmm
-#Paramter for price differences governing regime change
-window = 1
-diffpercent = 0.2
+from hmmlearn.hmm import MultinomialHMM
+#Paramters for price differences governing regime change
+#Window must be >0, 1= no window
+window = 300
+diffpercent = 1
 rolling_mean = price_matrix_items.rolling(window).mean()
 
 shifted_mean = rolling_mean.shift(window)
@@ -47,16 +48,29 @@ lower_threshold = shifted_mean * (1 - diffpercent / 100)
 booleanprice = np.select([
     rolling_mean > upper_threshold,
     rolling_mean < lower_threshold
-], [1, -1], default=0)
+], [2, 0], default=1)
+
+from sklearn.preprocessing import OneHotEncoder
+
+
 
 booleandf = pd.DataFrame(booleanprice, columns=price_matrix_items.columns)
+X=booleandf[12934].values.reshape(-1,1)
+X[0,0]=2
+
+encoder = OneHotEncoder(sparse_output=False, categories='auto')
+X_encoded = encoder.fit_transform(X).astype(int)  # Shape will now be (2499, 3)
 
 
-# iter = 100
-# startprob = [1/3,1/3,1/3] #reasonable to keep equal
-# transprob = [[1/3,1/3,1/3],[1/3,1/3,1/3],[1/3,1/3,1/3]]
-# emissionprob = [[1/3,1/3,1/3],[1/3,1/3,1/3],[1/3,1/3,1/3]]
-# model = hmm.MultinomialHMM(n_components=3, n_iter=iter)
-# model.startprob_ = np.array([])
-# model.transmat_ = np.array([[], [], []])
-# model.emissionprob_ = np.array([[], [], []])
+iter = 100
+startprob = [1/6,2/3,1/6] #reasonable to keep up/down always less than sideways
+transprob = [[1/6,2/3,1/6],[1/6,2/3,1/6],[1/6,2/3,1/6]]
+emissionprob = [[1/6,2/3,1/6],[1/6,2/3,1/6],[1/6,2/3,1/6]]
+HMMmodel = MultinomialHMM(n_components=3, n_iter=iter, init_params='') #leave init_params empty to self-select probabilities
+HMMmodel.n_features= len(np.unique(booleandf))
+HMMmodel.startprob_ = np.array(startprob)
+HMMmodel.transmat_ = np.array(transprob)
+HMMmodel.emissionprob_ = np.array(emissionprob)
+HMMmodel.fit(X_encoded)
+hidden_states= HMMmodel.predict(X_encoded)
+print(hidden_states)
