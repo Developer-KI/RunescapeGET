@@ -26,8 +26,8 @@ def RFTS(data: pd.DataFrame, target_col: str, splits: int = 5, estimators: int =
         model_mae = mean_absolute_error(y_test_cv, preds_cv)
         
         
-        if model_mse < min(cv_mse, default=0):
-            output_model = model_cv
+        if model_mse < min(cv_mse, default=np.inf):
+            output_model = (model_cv, test_idx)
 
         cv_mse.append(model_mse)
         cv_mae.append(model_mae)

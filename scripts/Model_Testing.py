@@ -25,11 +25,11 @@ df_roll = tools.target_rolling_features(reg_data, f'{target_item}', 10)
 df = pd.merge(df_time, df_roll, on='timestamp', how='inner').dropna()
 # %%
 #Run the RFTS model
-model = my_models.RFTS(data=df, target_col=f'{target_item}', estimators=200)
+model, test_idx = my_models.RFTS(data=df, target_col=f'{target_item}', estimators=200)
 # %%
 #Plot RFTS predictions vs realized price
 X = df.drop(f'{target_item}', axis=1)
 Y = df[f'{target_item}']
 
-tools.plot_pred_vs_price(Y, X, model=model)
+tools.plot_pred_vs_price(Y.iloc[test_idx[:100]], X.iloc[test_idx[:100]], model=model)
 # %%
