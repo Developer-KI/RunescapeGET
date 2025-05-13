@@ -41,7 +41,7 @@ plt.plot(pd.to_datetime(price_volatility.iloc[start:].index, unit='s'), price_vo
 
 plt.xlabel("Time")
 plt.ylabel("Standard Deviation (SD)")
-plt.title("OSRS Market Volatility")
+plt.title(fr"OSRS $\mathbf{{{round((price_volatility.shape[0]*5)/(60*24),1)}}}$ Day Market Volatility")
 plt.legend()
 plt.xticks(rotation=45)
 plt.grid()
@@ -68,7 +68,6 @@ plt.ylabel("Volume of Market Trade")
 plt.title(fr"Volume of $\mathbf{{{volume_matrix_items.shape[1]}}}$ Most Traded Items")
 
 
-plt.legend()
 plt.xticks(rotation=45)
 plt.grid()
 

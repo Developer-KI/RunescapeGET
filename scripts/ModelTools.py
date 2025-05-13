@@ -30,6 +30,7 @@ def plot_recent_alch_vs_price(item_id: int) -> None:
         plt.ylabel("Price")
         plt.title("Recent Alchemy vs Realized Price")
         plt.xticks(rotation=45)  # Rotate timestamps for clarity
+        plt.legend()
         plt.grid()
 
         plt.show()
