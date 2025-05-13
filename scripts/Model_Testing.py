@@ -3,7 +3,7 @@
 import pandas as pd
 import DataPipeline as pipeline
 import ModelTools as tools
-import Models as my_models
+import Models.RFTS as my_models
 
 # %%
 # Aggregate features for model
