@@ -1,5 +1,5 @@
 # %%
-#Script Innit
+#Script Init
 import pandas as pd
 import numpy as np
 import DataPipeline as pipeline
@@ -36,6 +36,27 @@ tools.plot_pred_vs_price(Y.iloc[test_idx[:100]], X.iloc[test_idx[:100]], model=m
 # %%
 import hmmlearn as hmm
 #Paramter for price differences governing regime change
-diff = 2
-booleanprice = np.select([price_matrix_items>price_matrix_items.shift(1)+diff,price_matrix_items<price_matrix_items.shift(1)-diff], [1,-1], default=0)
+window = 1
+diffpercent = 0.2
+rolling_mean = price_matrix_items.rolling(window).mean()
+
+shifted_mean = rolling_mean.shift(window)
+upper_threshold = shifted_mean * (1 + diffpercent / 100)
+lower_threshold = shifted_mean * (1 - diffpercent / 100)
+
+booleanprice = np.select([
+    rolling_mean > upper_threshold,
+    rolling_mean < lower_threshold
+], [1, -1], default=0)
+
 booleandf = pd.DataFrame(booleanprice, columns=price_matrix_items.columns)
+
+
+# iter = 100
+# startprob = [1/3,1/3,1/3] #reasonable to keep equal
+# transprob = [[1/3,1/3,1/3],[1/3,1/3,1/3],[1/3,1/3,1/3]]
+# emissionprob = [[1/3,1/3,1/3],[1/3,1/3,1/3],[1/3,1/3,1/3]]
+# model = hmm.MultinomialHMM(n_components=3, n_iter=iter)
+# model.startprob_ = np.array([])
+# model.transmat_ = np.array([[], [], []])
+# model.emissionprob_ = np.array([[], [], []])

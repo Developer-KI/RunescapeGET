@@ -51,8 +51,8 @@ plt.show()
 # %%
 #Item Price vs Alchemy Price Plot
 #219, 12934, 
-tools.plot_historical_alch_vs_price(12934)
-tools.plot_recent_alch_vs_price(12934)
+tools.plot_historical_alch_vs_price(5304)
+tools.plot_recent_alch_vs_price(5304)
 # %%
 # Total Volume Plot 
 plt.figure(figsize=(10,5))
