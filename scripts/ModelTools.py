@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import DataPipeline as pipeline
@@ -9,6 +10,20 @@ def target_time_features(y: pd.DataFrame, feature_col: str, time_feature: int = 
     for t in range(1, time_feature + 1):
         data[f'lag{t}'] = data[feature_col].shift(t)
     return data
+
+def rolling_classification(features:pd.DataFrame, window:int, diffpercent: float):
+    rolling_mean = features.rolling(window).mean()
+    shifted_mean = features(window)
+    upper_threshold = shifted_mean * (1 + diffpercent / 100)
+    lower_threshold = shifted_mean * (1 - diffpercent / 100)
+
+    booleandf = np.select([
+        rolling_mean > upper_threshold,
+        rolling_mean < lower_threshold
+    ], [2, 0], default=1)
+
+    booleandf_out = pd.DataFrame(booleandf, columns=features.columns)
+    return booleandf_out
 
 def target_rolling_features(y: pd.DataFrame, feature_col: str, window: int = 2) -> pd.DataFrame:
     data = y.copy()
@@ -75,3 +90,27 @@ def plot_pred_vs_price(Y_test: pd.Series, X_test: pd.DataFrame, model) -> None:
     plt.grid()
 
     plt.show()
+
+def plot_classification_vs_price(hist_pricedata,features,item, model):
+    timescale = hist_pricedata.index
+    hidden_states= model.predict(features)
+
+    state_colors = {0: "red", 1: "gray", 2: "green"}
+    fig, ax = plt.subplots()
+
+    for t in range(1,len(timescale)-1):
+        ax.axvspan(timescale[t], timescale[t + 1], color=state_colors[hidden_states[t]], alpha=0.07)
+
+    ax.plot(timescale, hist_pricedata[item], label="Price Data")
+    ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
+    ax.yaxis.get_major_formatter().set_scientific(False)
+    ax.ticklabel_format(useOffset=False) 
+
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Price")
+    ax.legend()
+    plt.xticks(rotation=45)
+    plt.grid()
+
+    plt.show()
+
